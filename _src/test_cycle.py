@@ -1,29 +1,21 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
-
-import imp
-from logging import log
 import os
 import datetime
-from posixpath import split
 
 #add internal libary
 from _src._api import rest, logger, excel, playload, config, logging_message
-
-
-
-
+from _src import test_cycle_selenium
+    
 #make logpath
 logging= logger.logger
-
 
 #loading config data
 config_path = 'static\config\config.json'
 config_data =config.load_config(config_path)
 qss_path = config_data['qss_path']
 message_path = config_data['message_path']
-
-
+test_cycle_url = config_data['test_cycle_url']
 
 def make_excel_data(data,ws_list):
     tc_data ={}
@@ -51,22 +43,13 @@ def update_test_execution_by_rest(rh, execution_data):
         logging.info(result.status_code)
         logging_message.input_message(path = message_path,message = 'test execution updated - %s' %str(execution_data['ExecutionId']))
     else:
-        logging.info(result.text) 
+        logging.info(result.text)
+        logging.info(result)
         logging_message.input_message(path = message_path,message = 'test execution updated error - %s - %s' %(str(execution_data['ExecutionId']),result.text))
     return 0
 
 def update_test_execution_by_selenium(execution_data):
-    #logging.info('%s' %(str(execution_data)))
-    ExecutionId = execution_data['ExecutionId']
-    StepId = execution_data['StepId'] 
-    ExecutionStatus = execution_data['ExecutionStatus']
-    Comment = execution_data['Comment']
-    ExecutionDefects = execution_data['ExecutionDefects']
-    OrderId = execution_data['OrderId']
-    Step_Result = execution_data['Step Result']
-    Comments = execution_data['Comments']
-    from _src import test_cycle_selenium
-    test_cycle_selenium.start()
+    test_cycle_selenium.start(execution_data,test_cycle_url)
     return 0
 
 def update_test_cycle(rh, file):

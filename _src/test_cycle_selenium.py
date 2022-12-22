@@ -5,12 +5,19 @@ import chromedriver_autoinstaller
 import sys, time
 
 
+#add internal libary
+from _src._api import logger
+
+#make logpath
+logging= logger.logger
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
-def start():
+def start(execution_data,test_cycle_url):
+    #set up chromedriver
     chrome_ver = chromedriver_autoinstaller.get_chrome_version().split('.')[0]  #크롬드라이버 버전 확인
     options = webdriver.ChromeOptions()
     options.add_argument('window-size=1920x1080')
@@ -26,10 +33,14 @@ def start():
         chromedriver_autoinstaller.install(True)
         driver = webdriver.Chrome(f'./{chrome_ver}/chromedriver.exe',options=options)
     
-    driver.get('https://www.naver.com/')
-    wait = WebDriverWait(driver, 10)
-    element = wait.until(EC.element_to_be_clickable((By.ID, 'NM_WEATHER')))
-    driver.implicitly_wait(1000)
-    
-    while(True):
-        pass
+    logging.info('%s' %(str(execution_data)))
+    ExecutionId = execution_data['ExecutionId']
+    StepId = execution_data['StepId'] 
+    ExecutionStatus = execution_data['ExecutionStatus']
+    Comment = execution_data['Comment']
+    ExecutionDefects = execution_data['ExecutionDefects']
+    OrderId = execution_data['OrderId']
+    Step_Result = execution_data['Step Result']
+    Comments = execution_data['Comments']
+    full_url = test_cycle_url + ExecutionId
+    driver.get(full_url)
