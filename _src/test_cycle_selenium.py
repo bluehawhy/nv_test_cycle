@@ -61,6 +61,8 @@ def update_execution_result(driver, ExecutionId, ExecutionStatus):
         logging_message.input_message(path = message_path,message = 'ExecutionStatus already inputed. - %s' %(current_value))
         return 0
     else:
+        logging.info('execution-status(%s) is diff with result(%s).' %(current_value,ExecutionStatus))
+        logging_message.input_message(path = message_path,message = 'execution-status(%s) is diff with result(%s).' %(current_value,ExecutionStatus))
         #input execution
         wait = WebDriverWait(driver, 20)
         execution_xpath = '//*[@id="executionStatus-trigger-%s"]' %ExecutionId
@@ -84,7 +86,7 @@ def update_execution_comment(driver, ExecutionStatus,Comment,ExecutionDefects):
 
 
 def input_execution(driver, execution_data):
-    logging.info('%s' %(str(execution_data)))
+    #logging.info('%s' %(str(execution_data)))
     ExecutionId = execution_data['ExecutionId']
     StepId = execution_data['StepId'] 
     ExecutionStatus = execution_data['ExecutionStatus']
