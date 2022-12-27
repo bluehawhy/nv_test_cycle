@@ -13,7 +13,7 @@ from datetime import date
 
 
 from _src._api import filepath, logger, rest, config, logging_message
-from _src import test_cycle
+from _src import test_cycle, test_cycle_selenium
 
 logging = logger.logger
 logging_file_name = logger.log_full_name
@@ -167,10 +167,15 @@ class FormWidget(QWidget):
                 #make session
                 self.rh = rest.Handler_TestCycle(self.session)
                 try:
-                    test_cycle.update_test_cycle(self.rh,self.file_name)
-                except ValueError:
-                        logging_message.input_message(path = message_path,message = "wrong value in your sheet.")
-                        logging_message.input_message(path = message_path,message = "please check your excel sheet.")
+                    if config_data['import_type'] == 'selenium':
+                        test_cycle_selenium.update_test_cycle(self.file_name)
+                    elif config_data['import_type'] == 'rest':
+                        test_cycle.update_test_cycle(self.rh,self.file_name)
+                except Exception as inst:
+                    logging.debug(type(inst))
+                    logging.debug(inst)
+                    logging_message.input_message(path = message_path,message = "wrong value in your sheet.")
+                    logging_message.input_message(path = message_path,message = "please check your excel sheet.")
                 finally:
                     self.login_import_button.setEnabled(True)
                     self.statusbar_status = 'Test Cycle importing done.'
