@@ -57,8 +57,8 @@ def update_execution_result(driver, ExecutionId, ExecutionStatus):
     current_value =driver.find_element("xpath",xpath_current_value).text
     logging.info('current status is %s' %current_value)
     if current_value == ExecutionStatus:
-        logging.info('ExecutionStatus already inputed. - %s' %(current_value))
-        logging_message.input_message(path = message_path,message = 'ExecutionStatus already inputed. - %s' %(current_value))
+        logging.info('ExecutionStatus already inputted. - %s' %(current_value))
+        logging_message.input_message(path = message_path,message = 'ExecutionStatus already inputted. - %s' %(current_value))
         return 0
     else:
         logging.info('execution-status(%s) is diff with result(%s).' %(current_value,ExecutionStatus))
@@ -74,15 +74,26 @@ def update_execution_result(driver, ExecutionId, ExecutionStatus):
         time.sleep(1)
         return 0
 
-def update_execution_comment(driver, ExecutionStatus,Comment,ExecutionDefects):
+def update_execution_comment(driver, ExecutionId ,Comment):
     #input commetn
     wait = WebDriverWait(driver, 20)
-    comment_xpath = '//*[@id="comment-val"]'
-    element = wait.until(EC.element_to_be_clickable((By.XPATH,comment_xpath)))
-    driver.find_element("xpath",comment_xpath).click()
-    execu_xpath_comment_feild =driver.find_element("xpath",comment_xpath)
-    execu_xpath_comment_feild.send_keys('abc_test')
-    return 0
+    xpath_comment = '//*[@id="comment-val"]'
+    xpath_comment_value =driver.find_element("xpath",xpath_comment).text
+    logging.info(xpath_comment_value)
+    if xpath_comment_value == Comment:
+        logging.info('Comment already inputted.')
+        return 0
+    else:
+        element = wait.until(EC.element_to_be_clickable((By.XPATH,xpath_comment)))
+        driver.find_element("xpath",xpath_comment).click()
+        time.sleep(1)
+        xpath_comment_area ='//*[@id="schedule-comment-area"]'
+        text_feild_xpath_comment_area =driver.find_element("xpath",xpath_comment_area)
+        text_feild_xpath_comment_area.clear()
+        text_feild_xpath_comment_area.send_keys(Comment)
+        time.sleep(1)
+        driver.find_element("xpath",'//*[@id="comment-counter"]').click()
+        return 0
 
 
 def input_execution(driver, execution_data):
@@ -145,7 +156,8 @@ def input_execution(driver, execution_data):
         time.sleep(1)
     
     if OrderId == "1":
-        update_execution_result(driver, ExecutionId, ExecutionStatus)
+        #update_execution_result(driver, ExecutionId, ExecutionStatus)
+        update_execution_comment(driver, ExecutionId,Comment)
     #update_step_result(OrderId,Step_Result)
     #input_step_comment()
         
