@@ -32,18 +32,18 @@ def start_app():
     sys.exit(app.exec_())
 
 def debug_app():
-    lineEdit_user = 'miskang'
-    lineEdit_password = 'Zjavhwmzjvl22@4'
-    session = rest.initsession(lineEdit_user, lineEdit_password)
-    rh=rest.Handler_TestCycle(session[0])
+    lineEdit_user = config_data['id']
+    lineEdit_password = config_data['password']
+    #session = rest.initsession(lineEdit_user, lineEdit_password)
+    #rh=rest.Handler_TestCycle(session[0])
 
     #file = r'C:\Users\miskang\Downloads\tc_check\Smoke Test_E329.0_221921_JPN.xlsx'
     #test_cycle.update_test_cycle(rh,file)
 
-    file = r'C:\Users\miskang\Downloads\tc_check\E042.1_224741_JPN.xlsx'
-    test_cycle.update_test_cycle(rh,file)
-    
+    file = r'D:\_source\python\nv_test_cycle\static\test_cycle_template\E042.1_224741_JPN.xlsx'
+    #test_cycle.update_test_cycle(rh,file)
+    test_cycle_selenium.update_test_cycle(file)
     
 if __name__ =='__main__':
-    start_app()
+    debug_app()
 
