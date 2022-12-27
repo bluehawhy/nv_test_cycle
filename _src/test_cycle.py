@@ -4,8 +4,8 @@ import os
 import datetime
 
 #add internal libary
-from _src._api import rest, logger, excel, playload, config, logging_message
-from _src import test_cycle_selenium
+from _src._api import logger, excel, playload, config, logging_message
+
     
 #make logpath
 logging= logger.logger
@@ -48,10 +48,6 @@ def update_test_execution_by_rest(rh, execution_data):
         logging_message.input_message(path = message_path,message = 'test execution updated error - %s - %s' %(str(execution_data['ExecutionId']),result.text))
     return 0
 
-def update_test_execution_by_selenium(execution_data):
-    test_cycle_selenium.start(execution_data,test_cycle_url)
-    return 0
-
 def update_test_cycle(rh, file):
     # init
     logging.info('start importing test cycle - %s' %file)
@@ -90,13 +86,7 @@ def update_test_cycle(rh, file):
         else:
             logging_message.input_message(path = message_path,message = 'ExecutionId %s - StepId %s' %(ExecutionId,StepId))
             logging.info('ExecutionId %s - StepId %s' %(ExecutionId,StepId))
-            if config_data['import_type'] == 'selenium':
-                update_test_execution_by_selenium(tc_data)
-            elif config_data['import_type'] == 'rest':
-                update_test_execution_by_rest(rh, tc_data)
-            else:
-                logging_message.input_message(path = message_path,message = 'check inport type in config %s it should be selenium or rest' %(config_data['import_type']))
-                logging.info('check inport type in config %s it should be selenium or rest' %(config_data['import_type']))
+            update_test_execution_by_rest(rh, tc_data)
     logging_message.input_message(path = message_path,message ='import done and close workbook!')
     logging.info('import done and close workbook!')
     wb.close_workbook()
