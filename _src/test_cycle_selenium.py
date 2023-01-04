@@ -51,8 +51,11 @@ def login(driver):
     time.sleep(1)
     driver.find_element("xpath",'//*[@id="login-form-submit"]').click()
 
+
+#=================================================================================================
+# this is execution field update 
 def update_execution_result(driver, ExecutionId, ExecutionStatus):
-    #check execution
+    #check execution value
     xpath_current_value = '//*[@id="current-execution-status-dd-schedule-%s"]' %ExecutionId
     current_value =driver.find_element("xpath",xpath_current_value).text
     logging.info('current status is %s' %current_value)
@@ -61,6 +64,8 @@ def update_execution_result(driver, ExecutionId, ExecutionStatus):
         logging_message.input_message(path = message_path,message = 'ExecutionStatus already inputted. - %s' %(current_value))
         return 0
     else:
+        if ExecutionStatus == None:
+            return 0
         logging.info('execution-status(%s) is diff with result(%s).' %(current_value,ExecutionStatus))
         logging_message.input_message(path = message_path,message = 'execution-status(%s) is diff with result(%s).' %(current_value,ExecutionStatus))
         #input execution
@@ -75,15 +80,19 @@ def update_execution_result(driver, ExecutionId, ExecutionStatus):
         return 0
 
 def update_execution_comment(driver, ExecutionId ,Comment):
-    #input commetn
+    #input comment value
     wait = WebDriverWait(driver, 20)
     xpath_comment = '//*[@id="comment-val"]'
     xpath_comment_value =driver.find_element("xpath",xpath_comment).text
-    logging.info(xpath_comment_value)
+    logging.info('comment - %s'%xpath_comment_value)
     if xpath_comment_value == Comment:
         logging.info('Comment already inputted.')
         return 0
     else:
+        if Comment == "None":
+            logging.info('comment is None')
+            return 0
+        logging.info('start add comment.')
         element = wait.until(EC.element_to_be_clickable((By.XPATH,xpath_comment)))
         driver.find_element("xpath",xpath_comment).click()
         time.sleep(1)
@@ -96,10 +105,85 @@ def update_execution_comment(driver, ExecutionId ,Comment):
         return 0
 
 
+# 이 부분 업데이트 필요 - 없으면 날리기. (전체 비교 후 다르면 날리고 새로 넣는 방식이 필요할 듯)
+def update_execution_defect(driver, ExecutionId ,ExecutionDefect):
+    xpath_defects = '//*[@id="zephyrJEdefectskey-schedule-%s-multi-select"]/div[2]' %ExecutionId
+    xpath_defects_value =driver.find_element("xpath",xpath_defects)
+    defect_outerHTML = xpath_defects_value.get_attribute('outerHTML')
+    if ExecutionDefect.strip() in defect_outerHTML:
+        logging.info('%s already added in test execution' %ExecutionDefect.strip())
+    else: 
+        logging.info('start to add %s into test execution' %ExecutionDefect.strip())
+        xpath_defects_text_area = '//*[@id="zephyrJEdefectskey-schedule-%s-textarea"]' %ExecutionId
+        driver.find_element("xpath",xpath_defects_text_area).click()
+        driver.find_element("xpath",xpath_defects_text_area).send_keys(ExecutionDefect)
+        driver.find_element("xpath",'//*[@id="zexecute"]/fieldset/div[1]/div[2]/div[2]/div/div/label').click()
+        time.sleep(1)
+    return 0
+
+def update_execution_defects(driver, ExecutionId ,ExecutionDefects):
+    split_1 = '|'
+    split_2 = ','
+    ExecutionDefects = ExecutionDefects.split(split_1)[0].split(split_2)
+    for defect in ExecutionDefects:
+        update_execution_defect(driver, ExecutionId ,defect)
+    return 0
+#=================================================================================================
+
+
+#=================================================================================================
+# this is step field update 
+def update_step_result(driver,OrderId,Step_Result):
+    #check step value
+    step_xpath_result = '//*[@id="unfreezedGridBody"]/div[6]/div[%s]/div/div' %OrderId
+    wait = WebDriverWait(driver, 20)
+    element = wait.until(EC.element_to_be_clickable((By.XPATH,step_xpath_result)))
+    current_value =driver.find_element("xpath",step_xpath_result).text
+    logging.info('current step result is %s' %current_value)
+    if current_value == Step_Result:
+        logging.info('Step Result already inputted. - %s' %(current_value))
+        logging_message.input_message(path = message_path,message = 'Step Result already inputted. - %s' %(current_value))
+        return 0
+    else: 
+        step_xpath_result = '//*[@id="unfreezedGridBody"]/div[6]/div[%s]/div/div/span[3]' %OrderId
+        driver.find_element("xpath",step_xpath_result).click()
+        #set id of test result
+        if Step_Result in config_data['test_resut_sel'].keys():
+            step_resut_number = config_data['test_resut_sel'][Step_Result]
+        else:
+            logging.info('there is no list in test result list, please check your reulst - %s' %Step_Result)
+            step_resut_number = '6'
+        logging.info('test_resut_number is %s ExecutionStatus is %s' %(step_resut_number,Step_Result))
+        step_xpath_result_id = '//*[@id="unfreezedGridBody"]/div[6]/div[%s]/div/div/div/ul/li[%s]' %(OrderId, step_resut_number)
+        logging.info(step_xpath_result_id)
+        driver.find_element("xpath",step_xpath_result_id).click()
+        time.sleep(1)
+        return 0
+
+def update_step_comment(driver,OrderId,step_comment):
+    step_xpath_comment = '//*[@id="unfreezedGridBody"]/div[7]/div[%s]/div' %OrderId
+    logging.info(step_xpath_comment)
+    #select text feild
+    driver.find_element("xpath",step_xpath_comment).click()
+    time.sleep(10)
+    #input text
+    
+    step_xpath_comment_input = '//*[@id="unfreezedGridBody"]/div[7]/div[%s]' %OrderId
+    step_xpath_comment_feild =driver.find_element("xpath",step_xpath_comment_input)
+    step_xpath_comment_feild.send_keys(step_comment)
+    step_xpath_comment = '//*[@id="unfreezedGridBody"]/div[7]/div[%s]' %OrderId
+    driver.find_element("xpath",step_xpath_comment).click()
+    time.sleep(1)
+
+
+def update_step_defect():
+    return 0
+#=================================================================================================
+
+
 def input_execution(driver, execution_data):
-    #logging.info('%s' %(str(execution_data)))
+    logging.info('%s' %(str(execution_data)))
     ExecutionId = execution_data['ExecutionId']
-    StepId = execution_data['StepId'] 
     ExecutionStatus = execution_data['ExecutionStatus']
     Comment = execution_data['Comment']
     ExecutionDefects = execution_data['ExecutionDefects']
@@ -120,44 +204,17 @@ def input_execution(driver, execution_data):
         driver.get(full_url)
         time.sleep(10)
 
-
-
-    def update_step_result(OrderId,Step_Result):
-        logging.info('oder id is %s' %OrderId)
-        
-        step_xpath_result = '//*[@id="unfreezedGridBody"]/div[6]/div[%s]/div/div/span[3]' %OrderId
-        logging.info(step_xpath_result)
-        wait = WebDriverWait(driver, 20)
-        element = wait.until(EC.element_to_be_clickable((By.XPATH,step_xpath_result)))
-        driver.find_element("xpath",step_xpath_result).click()
-        #set id of test result
-        if Step_Result in config_data['test_resut_sel'].keys():
-            step_resut_number = config_data['test_resut_sel'][Step_Result]
-        else:
-            logging.info('there is no list in test result list, please check your reulst - %s' %Step_Result)
-            step_resut_number = '6'
-        logging.info('test_resut_number is %s ExecutionStatus is %s' %(step_resut_number,ExecutionStatus))
-        step_xpath_result_id = '//*[@id="unfreezedGridBody"]/div[6]/div[%s]/div/div/div/ul/li[%s]' %(OrderId, step_resut_number)
-        logging.info(step_xpath_result_id)
-        driver.find_element("xpath",step_xpath_result_id).click()
-        time.sleep(1)
-    
-    def input_step_comment():
-        step_xpath_comment = '//*[@id="unfreezedGridBody"]/div[7]/div[%s]' %OrderId
-        logging.info(step_xpath_comment)
-        #select text feild
-        driver.find_element("xpath",step_xpath_comment).click()
-        time.sleep(1)
-        #input text
-        step_xpath_comment_input = '//*[@id="unfreezedGridBody"]/div[7]/div[%s]/div/div'  %OrderId
-        driver.find_element("xpath",step_xpath_comment_input).click()
-        step_xpath_comment_feild =driver.find_element("xpath",step_xpath_comment_input)
-        step_xpath_comment_feild.send_keys('abc_test')
-        time.sleep(1)
-    
     if OrderId == "1":
         #update_execution_result(driver, ExecutionId, ExecutionStatus)
-        update_execution_comment(driver, ExecutionId,Comment)
+        #update_execution_comment(driver, ExecutionId,Comment)
+        #update_execution_defects(driver, ExecutionId ,ExecutionDefects)
+        update_step_result(driver,OrderId,Step_Result)
+        #update_step_comment(driver,OrderId,Comments)
+        pass
+    else:
+        pass
+        #update_step_result(driver,OrderId,Step_Result)
+        #update_step_comment(driver,OrderId,Comments)
     #update_step_result(OrderId,Step_Result)
     #input_step_comment()
         
@@ -234,8 +291,11 @@ def update_test_cycle(file):
             logging_message.input_message(path = message_path,message = 'end   ExecutionId %s - StepId %s' %(ExecutionId,StepId))
             logging.info('end   ExecutionId %s - StepId %s' %(ExecutionId,StepId))
     logging_message.input_message(path = message_path,message ='import done and close workbook!')
-    logging.info('import done and close workbook!')
+    logging.info('import done!')
+    logging.info('close workbook!')
     wb.close_workbook()
+    logging.info('close driver!')
+    driver.close()
     return 0    
 
 
