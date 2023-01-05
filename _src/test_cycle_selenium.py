@@ -32,11 +32,11 @@ def make_excel_data(data,ws_list):
 def moveToNextTestStep(driver):
     #spand step list to 50
     #this is running when test step is over 50 (not need currently)
-    time.sleep(10)
+    time.sleep(0.5)
     wait = WebDriverWait(driver, 10)
     element = wait.until(EC.element_to_be_clickable((By.ID, 'pagination-dropdown-button')))
     driver.find_element("xpath",'//*[@id="pagination-dropdown-button"]').click()
-    time.sleep(10)
+    time.sleep(0.5)
 
 def login(driver):
     #start login
@@ -48,7 +48,7 @@ def login(driver):
     username.send_keys(jira_id)
     password=driver.find_element("xpath",'//*[@id="login-form-password"]')
     password.send_keys(jira_password)
-    time.sleep(1)
+    time.sleep(0.5)
     driver.find_element("xpath",'//*[@id="login-form-submit"]').click()
 
 
@@ -76,7 +76,7 @@ def update_execution_result(driver, ExecutionId, ExecutionStatus):
         Execution_xpath_result_id = '//*[@id="exec_status-schedule-%s"]/ul/li[@data-str="%s"]' %(ExecutionId, ExecutionStatus)
         logging.info(Execution_xpath_result_id)
         driver.find_element("xpath",Execution_xpath_result_id).click()
-        time.sleep(1)
+        time.sleep(0.5)
         return 0
 
 def update_execution_comment(driver, ExecutionId ,Comment):
@@ -92,7 +92,7 @@ def update_execution_comment(driver, ExecutionId ,Comment):
         logging.info('start add comment.')
         element = wait.until(EC.element_to_be_clickable((By.XPATH,xpath_comment)))
         driver.find_element("xpath",xpath_comment).click()
-        time.sleep(1)
+        time.sleep(0.5)
         xpath_comment_area ='//*[@id="schedule-comment-area"]'
         text_feild_xpath_comment_area =driver.find_element("xpath",xpath_comment_area)
         text_feild_xpath_comment_area.clear()
@@ -101,33 +101,25 @@ def update_execution_comment(driver, ExecutionId ,Comment):
             driver.find_element("xpath",'//*[@id="comment-counter"]').click()
             return 0
         text_feild_xpath_comment_area.send_keys(Comment)
-        time.sleep(1)
+        time.sleep(0.5)
         driver.find_element("xpath",'//*[@id="comment-counter"]').click()
         return 0
 
 
-# 이 부분 업데이트 필요 - 없으면 날리기. (전체 비교 후 다르면 날리고 새로 넣는 방식이 필요할 듯)
-def update_execution_defect(driver, ExecutionId ,ExecutionDefect):
+def update_execution_defect(driver, ExecutionId ,execution_defect):
+    #현재는 값 추가만 적용, 차후 삭제 비교도 진행 해야함.
     xpath_defects = '//*[@id="zephyrJEdefectskey-schedule-%s-multi-select"]/div[2]' %ExecutionId
     xpath_defects_value =driver.find_element("xpath",xpath_defects)
     defect_outerHTML = xpath_defects_value.get_attribute('outerHTML')
-    if ExecutionDefect.strip() in defect_outerHTML:
-        logging.info('%s already added in test execution' %ExecutionDefect.strip())
+    if execution_defect in defect_outerHTML:
+        logging.info('%s already added in test execution' %execution_defect)
     else: 
-        logging.info('start to add %s into test execution' %ExecutionDefect.strip())
+        logging.info('start to add %s into test execution' %execution_defect)
         xpath_defects_text_area = '//*[@id="zephyrJEdefectskey-schedule-%s-textarea"]' %ExecutionId
         driver.find_element("xpath",xpath_defects_text_area).click()
-        driver.find_element("xpath",xpath_defects_text_area).send_keys(ExecutionDefect)
+        driver.find_element("xpath",xpath_defects_text_area).send_keys(execution_defect)
         driver.find_element("xpath",'//*[@id="zexecute"]/fieldset/div[1]/div[2]/div[2]/div/div/label').click()
-        time.sleep(1)
-    return 0
-
-def update_execution_defects(driver, ExecutionId ,ExecutionDefects):
-    split_1 = '|'
-    split_2 = ','
-    ExecutionDefects = ExecutionDefects.split(split_1)[0].split(split_2)
-    for defect in ExecutionDefects:
-        update_execution_defect(driver, ExecutionId ,defect)
+        time.sleep(0.5)
     return 0
 #=================================================================================================
 
@@ -158,7 +150,7 @@ def update_step_result(driver,OrderId,Step_Result):
         step_xpath_result_id = '//*[@id="unfreezedGridBody"]/div[6]/div[%s]/div/div/div/ul/li[%s]' %(OrderId, step_resut_number)
         logging.info(step_xpath_result_id)
         driver.find_element("xpath",step_xpath_result_id).click()
-        time.sleep(1)
+        time.sleep(0.5)
         return 0
 
 def update_step_comment(driver,OrderId,step_comment):
@@ -187,10 +179,10 @@ def update_step_comment(driver,OrderId,step_comment):
             return 0
         step_xpath_comment_feild.send_keys(step_comment)
         driver.find_element("xpath",'//*[@id="unfreezedGridHeader"]/div[2]/div/div').click()        
-        time.sleep(1)
+        time.sleep(0.5)
         return 0
 
-def update_step_defect():
+def update_step_defect(driver,OrderId,step_defects):
     return 0
 #=================================================================================================
 
@@ -216,30 +208,52 @@ def input_execution(driver, execution_data):
     else:
         logging.info('search for %s' %(full_url))
         driver.get(full_url)
-        time.sleep(10)
+        time.sleep(0.5)
+    
+    
+    #execution defect 처리
+    def serperate_defects(ExecutionDefects):
+        split_1 = '|'
+        split_2 = ','
+        execution_defects = []
+        step_defects = []
+        if ExecutionDefects =="None":
+            return execution_defects, step_defects
+        else:
+            if split_1 in ExecutionDefects:
+                temp_execution_defects = ExecutionDefects.split(split_1)[0].split(split_2)
+                for temp_execution_defect in temp_execution_defects:
+                    execution_defect = temp_execution_defect.strip()
+                    execution_defects.append(execution_defect)
+                temp_step_defects = ExecutionDefects.split(split_1)[1].split(split_2)
+                for temp_step_defect in temp_step_defects:
+                    step_defect = temp_step_defect.strip()
+                    step_defects.append(step_defect)
+            else:
+                temp_step_defects = ExecutionDefects.split(split_1)[0].split(split_2)
+                for temp_step_defect in temp_step_defects:
+                    step_defect = temp_step_defect.strip()
+                    step_defects.append(step_defect)
+
+        return execution_defects, step_defects
+    logging.info(serperate_defects(ExecutionDefects))
+    execution_defects = serperate_defects(ExecutionDefects)[0]
+    step_defects = serperate_defects(ExecutionDefects)[1]
 
     if OrderId == "1":
-        #update_execution_result(driver, ExecutionId, ExecutionStatus)
-        #update_execution_comment(driver, ExecutionId,Comment)
-        #update_execution_defects(driver, ExecutionId ,ExecutionDefects)
-        #update_step_result(driver,OrderId,Step_Result)
+        update_execution_result(driver, ExecutionId, ExecutionStatus)
+        update_execution_comment(driver, ExecutionId,Comment)
+        for execution_defect in execution_defects:
+            update_execution_defect(driver, ExecutionId ,execution_defect)
+        update_step_result(driver,OrderId,Step_Result)
         update_step_comment(driver,OrderId,Comments)
-        pass
+        for step_defect in step_defects:
+            update_step_defect(driver,OrderId,step_defect)
     else:
-        pass
-        #update_step_result(driver,OrderId,Step_Result)
+        update_step_result(driver,OrderId,Step_Result)
         update_step_comment(driver,OrderId,Comments)
-    #update_step_result(OrderId,Step_Result)
-    #input_step_comment()
-        
-
-
-
-
-
-
-
-
+        for step_defect in step_defects:
+            update_step_defect(driver,OrderId,step_defect)
 
 def update_test_cycle(file):
     # loading excel data
@@ -302,6 +316,8 @@ def update_test_cycle(file):
             logging_message.input_message(path = message_path,message = 'start ExecutionId %s - StepId %s' %(ExecutionId,StepId))
             logging.info('start ExecutionId %s - StepId %s' %(ExecutionId,StepId))
             input_execution(driver, tc_data)
+
+
             logging_message.input_message(path = message_path,message = 'end   ExecutionId %s - StepId %s' %(ExecutionId,StepId))
             logging.info('end   ExecutionId %s - StepId %s' %(ExecutionId,StepId))
     logging_message.input_message(path = message_path,message ='import done and close workbook!')
