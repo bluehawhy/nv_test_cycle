@@ -89,9 +89,6 @@ def update_execution_comment(driver, ExecutionId ,Comment):
         logging.info('Comment already inputted.')
         return 0
     else:
-        if Comment == "None":
-            logging.info('comment is None')
-            return 0
         logging.info('start add comment.')
         element = wait.until(EC.element_to_be_clickable((By.XPATH,xpath_comment)))
         driver.find_element("xpath",xpath_comment).click()
@@ -99,6 +96,10 @@ def update_execution_comment(driver, ExecutionId ,Comment):
         xpath_comment_area ='//*[@id="schedule-comment-area"]'
         text_feild_xpath_comment_area =driver.find_element("xpath",xpath_comment_area)
         text_feild_xpath_comment_area.clear()
+        if Comment == "None":
+            logging.info('comment is None so clear text')
+            driver.find_element("xpath",'//*[@id="comment-counter"]').click()
+            return 0
         text_feild_xpath_comment_area.send_keys(Comment)
         time.sleep(1)
         driver.find_element("xpath",'//*[@id="comment-counter"]').click()
@@ -161,20 +162,33 @@ def update_step_result(driver,OrderId,Step_Result):
         return 0
 
 def update_step_comment(driver,OrderId,step_comment):
+    #read comment in test cylce
     step_xpath_comment = '//*[@id="unfreezedGridBody"]/div[7]/div[%s]/div' %OrderId
-    logging.info(step_xpath_comment)
-    #select text feild
-    driver.find_element("xpath",step_xpath_comment).click()
-    time.sleep(10)
-    #input text
-    
-    step_xpath_comment_input = '//*[@id="unfreezedGridBody"]/div[7]/div[%s]' %OrderId
-    step_xpath_comment_feild =driver.find_element("xpath",step_xpath_comment_input)
-    step_xpath_comment_feild.send_keys(step_comment)
-    step_xpath_comment = '//*[@id="unfreezedGridBody"]/div[7]/div[%s]' %OrderId
-    driver.find_element("xpath",step_xpath_comment).click()
-    time.sleep(1)
-
+    wait = WebDriverWait(driver, 20)
+    wait.until(EC.element_to_be_clickable((By.XPATH,step_xpath_comment)))
+    current_value =driver.find_element("xpath",step_xpath_comment).text
+    logging.info('current_value - %s, step_comment - %s' %(current_value,step_comment))
+    if current_value == step_comment:
+        logging.info('step comment already inputted. - %s' %(current_value))
+        logging_message.input_message(path = message_path,message = 'step comment already inputted. - %s' %(current_value))
+        return 0
+    else:
+        logging.info('start input step comment - %s' %(step_comment))
+        logging_message.input_message(path = message_path,message = 'start input step comment - %s' %(step_comment))
+        #select text feild
+        wait.until(EC.element_to_be_clickable((By.XPATH,step_xpath_comment)))
+        driver.find_element("xpath",step_xpath_comment).click()
+        #clear textarea and send key.
+        step_xpath_comment_feild = driver.find_elements("xpath",'//*[@id="editMode"]/div/textarea')[int(OrderId)-1]
+        step_xpath_comment_feild.clear()
+        if step_comment == "None":
+            logging.info('step comment is None so clear text')
+            driver.find_element("xpath",'//*[@id="unfreezedGridHeader"]/div[2]/div/div').click()
+            return 0
+        step_xpath_comment_feild.send_keys(step_comment)
+        driver.find_element("xpath",'//*[@id="unfreezedGridHeader"]/div[2]/div/div').click()        
+        time.sleep(1)
+        return 0
 
 def update_step_defect():
     return 0
@@ -208,13 +222,13 @@ def input_execution(driver, execution_data):
         #update_execution_result(driver, ExecutionId, ExecutionStatus)
         #update_execution_comment(driver, ExecutionId,Comment)
         #update_execution_defects(driver, ExecutionId ,ExecutionDefects)
-        update_step_result(driver,OrderId,Step_Result)
-        #update_step_comment(driver,OrderId,Comments)
+        #update_step_result(driver,OrderId,Step_Result)
+        update_step_comment(driver,OrderId,Comments)
         pass
     else:
         pass
         #update_step_result(driver,OrderId,Step_Result)
-        #update_step_comment(driver,OrderId,Comments)
+        update_step_comment(driver,OrderId,Comments)
     #update_step_result(OrderId,Step_Result)
     #input_step_comment()
         
