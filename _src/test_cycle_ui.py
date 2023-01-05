@@ -3,6 +3,7 @@ import os
 import sys
 import time
 import threading
+import traceback
 from PyQt5.QtWidgets import QMainWindow, QApplication
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget
 from PyQt5.QtWidgets import QLabel, QLineEdit, QPushButton, QGridLayout, QPlainTextEdit, QFileDialog, QMessageBox, QTextBrowser
@@ -174,8 +175,8 @@ class FormWidget(QWidget):
                 except Exception as inst:
                     logging.debug(type(inst))
                     logging.debug(inst)
-                    logging_message.input_message(path = message_path,message = "wrong value in your sheet.")
-                    logging_message.input_message(path = message_path,message = "please check your excel sheet.")
+                    logging.debug(traceback.format_exc())
+                    logging_message.input_message(path = message_path,message = "there is errer at the point - %s" %str(inst))
                 finally:
                     self.login_import_button.setEnabled(True)
                     self.statusbar_status = 'Test Cycle importing done.'

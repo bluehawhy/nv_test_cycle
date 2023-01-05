@@ -45,5 +45,5 @@ def debug_app():
     test_cycle_selenium.update_test_cycle(file)
     
 if __name__ =='__main__':
-    debug_app()
+    start_app()
 

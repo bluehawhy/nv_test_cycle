@@ -84,12 +84,14 @@ def update_execution_comment(driver, ExecutionId ,Comment):
     wait = WebDriverWait(driver, 20)
     xpath_comment = '//*[@id="comment-val"]'
     xpath_comment_value =driver.find_element("xpath",xpath_comment).text
-    logging.info('comment - %s'%xpath_comment_value)
+    logging.info('execution comment - %s'%xpath_comment_value)
     if xpath_comment_value == Comment:
-        logging.info('Comment already inputted.')
+        logging.info('execution comment already inputted.')
+        logging_message.input_message(path = message_path,message = 'execution comment already inputted.')
         return 0
     else:
-        logging.info('start add comment.')
+        logging.info('start add execution comment.')
+        logging_message.input_message(path = message_path,message = 'start add execution comment - %s' %Comment)
         element = wait.until(EC.element_to_be_clickable((By.XPATH,xpath_comment)))
         driver.find_element("xpath",xpath_comment).click()
         time.sleep(0.5)
@@ -97,7 +99,8 @@ def update_execution_comment(driver, ExecutionId ,Comment):
         text_feild_xpath_comment_area =driver.find_element("xpath",xpath_comment_area)
         text_feild_xpath_comment_area.clear()
         if Comment == "None":
-            logging.info('comment is None so clear text')
+            logging.info('execution comment is None so clear text')
+            logging_message.input_message(path = message_path,message = 'execution comment is None so clear text')
             driver.find_element("xpath",'//*[@id="comment-counter"]').click()
             return 0
         text_feild_xpath_comment_area.send_keys(Comment)
@@ -165,8 +168,6 @@ def update_step_comment(driver,OrderId,step_comment):
         logging_message.input_message(path = message_path,message = 'step comment already inputted. - %s' %(current_value))
         return 0
     else:
-        logging.info('start input step comment - %s' %(step_comment))
-        logging_message.input_message(path = message_path,message = 'start input step comment - %s' %(step_comment))
         #select text feild
         wait.until(EC.element_to_be_clickable((By.XPATH,step_xpath_comment)))
         driver.find_element("xpath",step_xpath_comment).click()
@@ -175,8 +176,11 @@ def update_step_comment(driver,OrderId,step_comment):
         step_xpath_comment_feild.clear()
         if step_comment == "None":
             logging.info('step comment is None so clear text')
+            logging_message.input_message(path = message_path,message = 'step comment is None so clear text')
             driver.find_element("xpath",'//*[@id="unfreezedGridHeader"]/div[2]/div/div').click()
             return 0
+        logging.info('start input step comment - %s' %(str(step_comment)))
+        logging_message.input_message(path = message_path,message = 'start input step comment - %s' %(str(step_comment)))
         step_xpath_comment_feild.send_keys(step_comment)
         driver.find_element("xpath",'//*[@id="unfreezedGridHeader"]/div[2]/div/div').click()        
         time.sleep(0.5)
@@ -236,7 +240,8 @@ def input_execution(driver, execution_data):
                     step_defects.append(step_defect)
 
         return execution_defects, step_defects
-    logging.info(serperate_defects(ExecutionDefects))
+    logging.info('defect list - %s' %str(serperate_defects(ExecutionDefects)))
+    logging_message.input_message(path = message_path,message ='defect list - %s' %str(serperate_defects(ExecutionDefects)))
     execution_defects = serperate_defects(ExecutionDefects)[0]
     step_defects = serperate_defects(ExecutionDefects)[1]
 
@@ -287,7 +292,7 @@ def update_test_cycle(file):
     options.add_argument('window-size=1920x1080')
     #options.add_argument('disable-gpu')
     options.add_argument('lang=ko_KR')
-    #options.add_argument('headless') # HeadlessChrome 사용시 브라우저를 켜지않고 크롤링할 수 있게 해줌
+    options.add_argument('headless') # HeadlessChrome 사용시 브라우저를 켜지않고 크롤링할 수 있게 해줌
     #options.add_argument('User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36')
     # 헤더에 headless chrome 임을 나타내는 내용을 진짜 컴퓨터처럼 바꿔줌.
     try:
@@ -308,18 +313,15 @@ def update_test_cycle(file):
         #if first cell is None => break
         ExecutionId = tc_data['ExecutionId']
         StepId = tc_data['StepId'] if 'StepId' in tc_data.keys() else None
+        OrderId = tc_data['OrderId'] if 'OrderId' in tc_data.keys() else None
         if ExecutionId == 'ExecutionId':
             continue
         if ExecutionId in ('None',None):
             break
         else:
-            logging_message.input_message(path = message_path,message = 'start ExecutionId %s - StepId %s' %(ExecutionId,StepId))
-            logging.info('start ExecutionId %s - StepId %s' %(ExecutionId,StepId))
+            logging_message.input_message(path = message_path,message = '============ start ExecutionId %s - StepId %s - OrderId %s ============' %(ExecutionId,StepId,OrderId))
+            logging.info('============ start ExecutionId %s - StepId %s - OrderId %s ============' %(ExecutionId,StepId,OrderId))
             input_execution(driver, tc_data)
-
-
-            logging_message.input_message(path = message_path,message = 'end   ExecutionId %s - StepId %s' %(ExecutionId,StepId))
-            logging.info('end   ExecutionId %s - StepId %s' %(ExecutionId,StepId))
     logging_message.input_message(path = message_path,message ='import done and close workbook!')
     logging.info('import done!')
     logging.info('close workbook!')
