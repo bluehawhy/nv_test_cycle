@@ -91,10 +91,10 @@ def update_execution_comment(driver, ExecutionId ,Comment):
     xpath_comment = '//*[@id="comment-val"]'
     xpath_comment_value =driver.find_element("xpath",xpath_comment).text
     logging.info('execution current value - "%s", execution comment - "%s"' %(xpath_comment_value,Comment))
-    logging_message.input_message(path = message_path,message = 'execution current value - "%s", execution comment - "%s"' %(xpath_comment_value,Comment))
+    #logging_message.input_message(path = message_path,message = 'execution current value - "%s", execution comment - "%s"' %(xpath_comment_value,Comment))
     if xpath_comment_value == Comment:
-        logging.info('execution comment already inputted.')
-        logging_message.input_message(path = message_path,message = 'execution comment already inputted.')
+        #logging.info('execution comment already inputted.')
+        logging_message.input_message(path = message_path,message = 'execution comment already inputted. -"%s"' %Comment)
         return 0
     else:
         logging.info('start add execution comment.')
@@ -144,10 +144,10 @@ def update_step_result(driver,OrderId,Step_Result):
     time.sleep(0.2)
     element = wait.until(EC.element_to_be_clickable((By.XPATH,step_xpath_result)))
     current_value =driver.find_element("xpath",step_xpath_result).text
-    logging.info('current step result is %s' %current_value)
+    logging.info('current step result value - "%s", step result - "%s"' %(current_value,Step_Result))
     if current_value == Step_Result:
-        logging.info('Step Result already inputted. - %s' %(current_value))
-        logging_message.input_message(path = message_path,message = 'Step Result already inputted. - %s' %(current_value))
+        logging.info('step result already inputted. - %s' %(current_value))
+        logging_message.input_message(path = message_path,message = 'step result already inputted. - %s' %(current_value))
         return 0
     else: 
         step_xpath_result = '//*[@id="unfreezedGridBody"]/div[6]/div[%s]/div/div/span[3]' %OrderId
@@ -176,7 +176,7 @@ def update_step_comment(driver,OrderId,step_comment):
     wait.until(EC.element_to_be_clickable((By.XPATH,step_xpath_comment)))
     current_value =driver.find_element("xpath",step_xpath_comment).text
     logging.info('current step value - "%s", step comment - "%s"' %(current_value,step_comment))
-    logging_message.input_message(path = message_path,message = 'current step value - "%s", step comment - "%s"' %(current_value,step_comment))
+    #logging_message.input_message(path = message_path,message = 'current step value - "%s", step comment - "%s"' %(current_value,step_comment))
     if current_value == step_comment:
         logging.info('step comment already inputted. - "%s"' %(current_value))
         logging_message.input_message(path = message_path,message = 'step comment already inputted. - "%s"' %(current_value))
