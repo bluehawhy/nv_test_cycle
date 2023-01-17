@@ -8,10 +8,12 @@ logging= logger.logger
 logging= logger.logger
 logging_file_name = logger.log_full_name
 
-version = 'Test Cycle v0.1'
+version = 'Test Cycle v0.2'
 revision_list=[
     'Revision list',
-    'v0.1 (2022-01-24) : proto type release (beta ver.)'
+    'v0.1 (2022-12-24) : proto type release (beta ver.)',
+    'v0.2 (2023-01-17) : add time to stay for loading page.',
+    '                    exception if update fail of step comment'
     ]
 
 
