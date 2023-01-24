@@ -32,11 +32,11 @@ def make_excel_data(data,ws_list):
 def moveToNextTestStep(driver):
     #spand step list to 50
     #this is running when test step is over 50 (not need currently)
-    time.sleep(0.2)
+    time.sleep(0.5)
     wait = WebDriverWait(driver, 10)
     element = wait.until(EC.element_to_be_clickable((By.ID, 'pagination-dropdown-button')))
     driver.find_element("xpath",'//*[@id="pagination-dropdown-button"]').click()
-    time.sleep(0.2)
+    time.sleep(0.5)
     return 0
 
 def login(driver):
@@ -49,7 +49,7 @@ def login(driver):
     username.send_keys(jira_id)
     password=driver.find_element("xpath",'//*[@id="login-form-password"]')
     password.send_keys(jira_password)
-    time.sleep(0.2)
+    time.sleep(0.5)
     driver.find_element("xpath",'//*[@id="login-form-submit"]').click()
     return 0
 
@@ -76,11 +76,11 @@ def update_execution_result(driver, ExecutionId, ExecutionStatus):
         execution_xpath = '//*[@id="executionStatus-trigger-%s"]' %ExecutionId
         element = wait.until(EC.element_to_be_clickable((By.XPATH,execution_xpath)))
         driver.find_element("xpath",execution_xpath).click()
-        time.sleep(0.2)
+        time.sleep(0.5)
         Execution_xpath_result_id = '//*[@id="exec_status-schedule-%s"]/ul/li[@data-str="%s"]' %(ExecutionId, ExecutionStatus)
         logging.info(Execution_xpath_result_id)
         driver.find_element("xpath",Execution_xpath_result_id).click()
-        time.sleep(0.2)
+        time.sleep(0.5)
         return 0
 
 def update_execution_comment(driver, ExecutionId ,Comment):
@@ -101,7 +101,7 @@ def update_execution_comment(driver, ExecutionId ,Comment):
         logging_message.input_message(path = message_path,message = 'start add execution comment - %s' %Comment)
         element = wait.until(EC.element_to_be_clickable((By.XPATH,xpath_comment)))
         driver.find_element("xpath",xpath_comment).click()
-        time.sleep(0.2)
+        time.sleep(0.5)
         xpath_comment_area ='//*[@id="schedule-comment-area"]'
         text_feild_xpath_comment_area =driver.find_element("xpath",xpath_comment_area)
         text_feild_xpath_comment_area.clear()
@@ -111,7 +111,7 @@ def update_execution_comment(driver, ExecutionId ,Comment):
             driver.find_element("xpath",'//*[@id="comment-counter"]').click()
             return 0
         text_feild_xpath_comment_area.send_keys(Comment)
-        time.sleep(0.2)
+        time.sleep(0.5)
         driver.find_element("xpath",'//*[@id="comment-counter"]').click()
         return 0
 
@@ -127,10 +127,10 @@ def update_execution_defect(driver, ExecutionId ,execution_defect):
         logging.info('start to add %s into test execution' %execution_defect)
         xpath_defects_text_area = '//*[@id="zephyrJEdefectskey-schedule-%s-textarea"]' %ExecutionId
         driver.find_element("xpath",xpath_defects_text_area).click()
-        time.sleep(0.2)
+        time.sleep(0.5)
         driver.find_element("xpath",xpath_defects_text_area).send_keys(execution_defect)
         driver.find_element("xpath",'//*[@id="zexecute"]/fieldset/div[1]/div[2]/div[2]/div/div/label').click()
-        time.sleep(0.2)
+        time.sleep(0.5)
     return 0
 #=================================================================================================
 
@@ -141,7 +141,7 @@ def update_step_result(driver,OrderId,Step_Result):
     #check step value
     step_xpath_result = '//*[@id="unfreezedGridBody"]/div[6]/div[%s]/div/div' %OrderId
     wait = WebDriverWait(driver, 20)
-    time.sleep(0.2)
+    time.sleep(0.5)
     element = wait.until(EC.element_to_be_clickable((By.XPATH,step_xpath_result)))
     current_value =driver.find_element("xpath",step_xpath_result).text
     logging.info('current step result value - "%s", step result - "%s"' %(current_value,Step_Result))
@@ -152,7 +152,7 @@ def update_step_result(driver,OrderId,Step_Result):
     else: 
         step_xpath_result = '//*[@id="unfreezedGridBody"]/div[6]/div[%s]/div/div/span[3]' %OrderId
         driver.find_element("xpath",step_xpath_result).click()
-        time.sleep(0.2)
+        time.sleep(0.5)
         #set id of test result
         if Step_Result in config_data['test_resut_sel'].keys():
             step_resut_number = config_data['test_resut_sel'][Step_Result]
@@ -163,7 +163,7 @@ def update_step_result(driver,OrderId,Step_Result):
         step_xpath_result_id = '//*[@id="unfreezedGridBody"]/div[6]/div[%s]/div/div/div/ul/li[%s]' %(OrderId, step_resut_number)
         logging.info(step_xpath_result_id)
         driver.find_element("xpath",step_xpath_result_id).click()
-        time.sleep(0.2)
+        time.sleep(0.5)
         return 0
 
 def update_step_comment(driver,OrderId,step_comment):
@@ -185,7 +185,7 @@ def update_step_comment(driver,OrderId,step_comment):
         #select text feild
         wait.until(EC.element_to_be_clickable((By.XPATH,step_xpath_comment)))
         driver.find_element("xpath",step_xpath_comment).click()
-        time.sleep(0.2)
+        time.sleep(0.5)
         #clear textarea and send key.
         step_xpath_comment_feild = driver.find_elements("xpath",'//*[@id="editMode"]/div/textarea')[int(OrderId)-1]
         step_xpath_comment_feild.clear()
@@ -198,7 +198,7 @@ def update_step_comment(driver,OrderId,step_comment):
         logging_message.input_message(path = message_path,message = 'start input step comment - %s' %(str(step_comment)))
         step_xpath_comment_feild.send_keys(step_comment)
         driver.find_element("xpath",'//*[@id="unfreezedGridHeader"]/div[2]/div/div').click()        
-        time.sleep(0.2)
+        time.sleep(0.5)
         return 0
 
 def update_step_defect(driver,OrderId,step_defects):
@@ -228,7 +228,9 @@ def input_execution(driver, execution_data):
         logging.info('search for %s' %(full_url))
         logging_message.input_message(path = message_path,message = 'search for %s' %(full_url))
         driver.get(full_url)
-        time.sleep(0.2)
+        wait = WebDriverWait(driver, 20)
+        wait.until(EC.visibility_of_element_located((By.XPATH,'//*[@id="pagination-dropdown-button"]/span')))
+        time.sleep(1)
     
     
     #execution defect 처리
