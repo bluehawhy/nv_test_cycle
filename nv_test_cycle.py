@@ -5,7 +5,6 @@ from _src._api import logger, logging_message, rest, config
 from _src import test_cycle, test_cycle_ui, test_cycle_selenium
 logging= logger.logger
 
-logging= logger.logger
 logging_file_name = logger.log_full_name
 
 version = 'Test Cycle v0.2'

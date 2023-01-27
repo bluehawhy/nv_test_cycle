@@ -45,5 +45,4 @@ def makeLogger(logfile):
 log_file_name = '%s_%s.log' % (filepath.executed_file_name, filepath.now_date_time)
 log_folder_name = os.path.join('_logs')
 log_full_name = os.path.join(log_folder_name, log_file_name)
-print(log_full_name)
 logger = makeLogger(log_full_name)
