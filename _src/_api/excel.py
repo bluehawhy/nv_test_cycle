@@ -58,11 +58,10 @@ class Workbook(object):
         self.ws = self.wb.get_sheet_by_name(sheet_name)
         return self.ws
 
-
-    def chagne_cell_data(self, ws, col, row, val):
+    def change_cell_data(self, ws, col, row, val):
         # set value for each cell
         # col = A,B,C.... row = 1,2,3....
-        ws.cell(row=row, column=col + 1, value=val)
+        ws.cell(row=row, column=col, value=val)
         # ws[str(cell)] = val
         return 0
 

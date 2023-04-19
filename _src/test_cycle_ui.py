@@ -13,7 +13,7 @@ from PyQt5.QtGui import QTextCursor
 from datetime import date
 
 
-from _src._api import filepath, logger, rest, config, logging_message
+from _src._api import logger, rest, config, logging_message
 from _src import test_cycle, test_cycle_selenium
 
 logging = logger.logger
@@ -71,14 +71,17 @@ class FormWidget(QWidget):
         self.line_id = QLineEdit(self.user)       
         self.line_password = QLineEdit(self.password)
         self.line_password.setEchoMode(QLineEdit.Password)
-        self.login_import_button = QPushButton('Log In')
-        self.login_import_button.setFixedHeight(60)
+        self.button_login_import = QPushButton('Log In')
+        self.button_login_import.setFixedHeight(60)
+        self.button_sync_test_file = QPushButton('sync files')
+        self.button_sync_test_file.setFixedHeight(60)
         self.login_layout_id_pw.addWidget(QLabel('ID') , 1, 0)
         self.login_layout_id_pw.addWidget(QLabel('Password') , 2, 0)
         self.login_layout_id_pw.addWidget(self.line_id, 1, 2)
         self.login_layout_id_pw.addWidget(self.line_password, 2, 2)
         self.login_layout.addLayout(self.login_layout_id_pw)
-        self.login_layout.addWidget(self.login_import_button)
+        self.login_layout.addWidget(self.button_login_import)
+        self.login_layout.addWidget(self.button_sync_test_file)
         self.layout_main.addLayout(self.login_layout)
 
         # add log layout
@@ -88,7 +91,7 @@ class FormWidget(QWidget):
         self.setLayout(self.layout_main)
 
         #login / import event
-        self.login_import_button.clicked.connect(self.on_start)
+        self.button_login_import.clicked.connect(self.on_start)
         self.line_password.returnPressed.connect(self.on_start)
 
 
@@ -142,15 +145,13 @@ class FormWidget(QWidget):
             logging_message.input_message(path = message_path,message = 'current not login, start login')
             self.user = self.line_id.text()
             self.password = self.line_password.text()
-            self.session_list = rest.initsession(self.user, self.password)
-            self.session = self.session_list[0]
-            self.session_info = self.session_list[1]
+            self.session, self.session_info = rest.initsession(self.user, self.password)
             #fail to login
             if self.session_info == None:
                 QMessageBox.about(self, "Login Fail", "please check your password or internet connection")
             #if loggin success
             else:
-                self.login_import_button.setText('Import\nTest Cycle')
+                self.button_login_import.setText('Import\nTest Cycle')
                 self.statusbar_status = 'logged in'
                 logging_message.input_message(path = message_path,message = 'user (%s) is logged in' %self.user)
                 config_data['id'] = self.user
@@ -164,7 +165,7 @@ class FormWidget(QWidget):
             self.file_name = self.open_fileName_dialog()
             logging.info(self.file_name)
             def import_test_cycle():
-                self.login_import_button.setEnabled(False)
+                self.button_login_import.setEnabled(False)
                 #make session
                 self.rh = rest.Handler_TestCycle(self.session)
                 try:
@@ -178,7 +179,7 @@ class FormWidget(QWidget):
                     logging.debug(traceback.format_exc())
                     logging_message.input_message(path = message_path,message = "there is errer at the point - %s" %str(inst))
                 finally:
-                    self.login_import_button.setEnabled(True)
+                    self.button_login_import.setEnabled(True)
                     self.statusbar_status = 'Test Cycle importing done.'
                 return 0
             thread_import = threading.Thread(target=import_test_cycle)
