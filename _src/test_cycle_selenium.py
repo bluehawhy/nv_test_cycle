@@ -3,7 +3,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-import os
 import time
 import chromedriver_autoinstaller
 
@@ -16,12 +15,7 @@ logging= logger.logger
 
 #loading config data
 config_path = 'static\config\config.json'
-config_data =config.load_config(config_path)
-test_cycle_url = config_data['test_cycle_url']
-jira_login_url = config_data['jira_login_url']
-message_path = config_data['message_path']
-jira_id = config_data['id']
-jira_password = config_data['password']
+message_path = config.load_config(config_path)['message_path']
 
 def make_excel_data(data,ws_list):
     tc_data ={}
@@ -42,13 +36,17 @@ def moveToNextTestStep(driver):
     time.sleep(0.5)
     return 0
 
-def call_drivier():
+def call_drivier(headless=True):
     chrome_ver = chromedriver_autoinstaller.get_chrome_version().split('.')[0]  #크롬드라이버 버전 확인
     options = webdriver.ChromeOptions()
-    options.add_argument('window-size=1920x1080')
     #options.add_argument('disable-gpu')
     options.add_argument('lang=ko_KR')
-    options.add_argument('headless') # HeadlessChrome 사용시 브라우저를 켜지않고 크롤링할 수 있게 해줌
+    if headless is False:
+        logging.info(f'headless is {headless}')
+        options.add_argument('headless') # HeadlessChrome 사용시 브라우저를 켜지않고 크롤링할 수 있게 해줌
+    else:
+        options.add_argument('window-size=1920x1080')
+
     #options.add_argument('User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36')
     # 헤더에 headless chrome 임을 나타내는 내용을 진짜 컴퓨터처럼 바꿔줌.
     try:
@@ -60,6 +58,10 @@ def call_drivier():
     return driver
 
 def login(driver):
+    config_data =config.load_config(config_path)
+    jira_login_url = config_data['jira_login_url']
+    jira_id = config_data['id']
+    jira_password = config_data['password']
     #start login
     logging.info('start login')
     driver.get(jira_login_url)
@@ -134,6 +136,9 @@ def driver_get_to_url(driver,url):
 #=================================================================================================
 # this is execution field update 
 def update_execution_result(driver, ExecutionId, ExecutionStatus):
+    config_data =config.load_config(config_path)
+    test_cycle_url = config_data['test_cycle_url']
+
     #set update_status
     update_status = False
     #value is None
@@ -143,7 +148,7 @@ def update_execution_result(driver, ExecutionId, ExecutionStatus):
         return update_status
 
     #call url
-    full_url = test_cycle_url.replace('excution_id',ExecutionId)
+    full_url = str(test_cycle_url).replace('excution_id',ExecutionId)
     get_to_status, driver = driver_get_to_url(driver,full_url)
     if get_to_status is False:
         logging.info(f'fail to get current url, so skip the update')
@@ -194,6 +199,8 @@ def update_execution_result(driver, ExecutionId, ExecutionStatus):
 def update_execution_comment(driver, ExecutionId, Comment):
     #set update_status
     update_status = False
+    config_data =config.load_config(config_path)
+    test_cycle_url = config_data['test_cycle_url']
     
     #value is None
     if Comment == "None":
@@ -202,7 +209,7 @@ def update_execution_comment(driver, ExecutionId, Comment):
         return update_status
     
     #call url
-    full_url = test_cycle_url.replace('excution_id',ExecutionId)
+    full_url = str(test_cycle_url).replace('excution_id',ExecutionId)
     get_to_status, driver = driver_get_to_url(driver,full_url)
     if get_to_status is False:
         logging.info(f'fail to get current url, so skip the update')
@@ -237,8 +244,12 @@ def update_execution_comment(driver, ExecutionId, Comment):
     driver.find_element("xpath",'//*[@id="comment-counter"]').click()
 
 def update_execution_defect(driver, ExecutionId ,execution_defect):
-    #현재는 값 추가만 적용, 차후 삭제 비교도 진행 해야함.
+    #set update_status
+    update_status = False
+    #find element
     xpath_defects = '//*[@id="zephyrJEdefectskey-schedule-%s-multi-select"]/div[2]' %ExecutionId
+    find_status, xpath_defects_value = xpath_element_get_text(driver,xpath_defects)
+    
     xpath_defects_value =driver.find_element("xpath",xpath_defects)
     defect_outerHTML = xpath_defects_value.get_attribute('outerHTML')
     if execution_defect in defect_outerHTML:
@@ -251,17 +262,19 @@ def update_execution_defect(driver, ExecutionId ,execution_defect):
         driver.find_element("xpath",xpath_defects_text_area).send_keys(execution_defect)
         driver.find_element("xpath",'//*[@id="zexecute"]/fieldset/div[1]/div[2]/div[2]/div/div/label').click()
         time.sleep(0.5)
-    return 0
+    return update_status
 #=================================================================================================
 
 #=================================================================================================
 # this is step field update 
 def update_step_result(driver, ExecutionId, OrderId,Step_Result):
+    config_data =config.load_config(config_path)
+    test_cycle_url = config_data['test_cycle_url']
     #set update_status
     update_status = False
 
     #call url
-    full_url = test_cycle_url.replace('excution_id',ExecutionId)
+    full_url = str(test_cycle_url).replace('excution_id',ExecutionId)
     get_to_status, driver = driver_get_to_url(driver,full_url)
     if get_to_status is False:
         logging.info(f'fail to get current url, so skip the update')
@@ -283,7 +296,7 @@ def update_step_result(driver, ExecutionId, OrderId,Step_Result):
         logging_message.input_message(path = message_path,message = f'step result already inputted. - {xpath_step_result_value}')
         update_status = True
         return update_status
-        
+
     #start input
     time.sleep(0.5)
     step_xpath_result = '//*[@id="unfreezedGridBody"]/div[6]/div[%s]/div/div/span[3]' %OrderId
@@ -314,6 +327,10 @@ def update_step_result(driver, ExecutionId, OrderId,Step_Result):
     return update_status
 
 def update_step_comment(driver, ExecutionId, OrderId, step_comment):
+    #call tc url
+    config_data =config.load_config(config_path)
+    test_cycle_url = config_data['test_cycle_url']
+
     #set update_status
     update_status = False
 
@@ -324,7 +341,7 @@ def update_step_comment(driver, ExecutionId, OrderId, step_comment):
         return update_status
     
     #call url
-    full_url = test_cycle_url.replace('excution_id',ExecutionId)
+    full_url = str(test_cycle_url).replace('excution_id',ExecutionId)
     get_to_status, driver = driver_get_to_url(driver,full_url)
     if get_to_status is False:
         logging.info(f'fail to get current url, so skip the update')
@@ -446,6 +463,7 @@ def input_all_execution_data(driver, execution_data):
 
 #=================================================================================================
 def update_test_cycle(file):
+    config_data =config.load_config(config_path)
     # loading excel data
     logging.info('start importing test cycle - %s' %file)
     logging_message.input_message(path = message_path,message = f'start importing test cycle - {file}')
@@ -498,7 +516,11 @@ def update_test_cycle(file):
     
     #start selenium
     #set up chromedriver
-    driver = call_drivier()
+    if config_data['headless'] == "True":
+        headless = True
+    else:
+        headless = False
+    driver = call_drivier(headless=headless)
     login(driver)
     #=======================================================================================================
 
@@ -519,12 +541,14 @@ def update_test_cycle(file):
         elif ExecutionId == 'ExecutionId':
             logging.info(f'this is first low')
         elif update_status == 'True':
+            logging_message.input_message(path = message_path,message = f'update status is True')
             logging.info(f'update status is True')
         else:
             status_update_execution_result, status_update_execution_comment, status_update_step_result, status_update_step_comment = input_all_execution_data(driver, tc_data)
             result_value = f'status_update_execution_result - {status_update_execution_result}, status_update_execution_comment - {status_update_execution_comment}, status_update_step_result - {status_update_step_result}, status_update_step_comment - {status_update_step_comment}'
             total_result =  all((status_update_execution_result, status_update_execution_comment, status_update_step_result, status_update_step_comment))
             logging.info(f'{result_value} - total_result : {total_result}')
+            logging_message.input_message(path = message_path,message = f'{result_value} - total_result : {total_result}')
             wb.change_cell_data(tc_ws, tc_row_index.index('update_status')+1, cnt, total_result)
     logging_message.input_message(path = message_path,message ='import done and close workbook!')
     logging.info('import done!')

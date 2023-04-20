@@ -4,9 +4,7 @@ import sys
 import time
 import threading
 import traceback
-from PyQt5.QtWidgets import QMainWindow, QApplication
-from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget
-from PyQt5.QtWidgets import QLabel, QLineEdit, QPushButton, QGridLayout, QPlainTextEdit, QFileDialog, QMessageBox, QTextBrowser
+from PyQt5.QtWidgets import *
 from PyQt5.QtCore import pyqtSlot, QTimer, QTime
 
 from PyQt5.QtGui import QTextCursor
@@ -20,9 +18,8 @@ logging = logger.logger
 logging_file_name = logger.log_full_name
 
 config_path ='static\config\config.json'
-config_data =config.load_config(config_path)
-message_path = config_data['message_path']
-qss_path  = config_data['qss_path']
+message_path = config.load_config(config_path)['message_path']
+qss_path  = config.load_config(config_path)['qss_path']
 
 logging.debug('qss_path is %s' %qss_path)
 logging.debug('config_path is %s' %config_path)
@@ -60,12 +57,15 @@ class FormWidget(QWidget):
 
     def initUI(self):
         self.setStyleSheet(open(qss_path, "r").read())
-        # make layout
+        # call layout
         self.layout_main = QVBoxLayout(self)
-        # login page layout
         self.login_layout = QHBoxLayout(self)
         self.login_layout_id_pw = QGridLayout(self)
+        
+
+
         #set user data
+        config_data =config.load_config(config_path)
         self.user = config_data['id']
         self.password = config_data['password']
         self.line_id = QLineEdit(self.user)       
@@ -79,24 +79,47 @@ class FormWidget(QWidget):
         self.login_layout_id_pw.addWidget(QLabel('Password') , 2, 0)
         self.login_layout_id_pw.addWidget(self.line_id, 1, 2)
         self.login_layout_id_pw.addWidget(self.line_password, 2, 2)
+        
+        #set chrome UI layout
+        self.chrome_radio_layout = QHBoxLayout(self)
+        self.chrome_radio_layout.addWidget(QLabel('chrome'))
+        self.chrome_config = config_data['headless']
+        for self.chrome in ['True','False']:
+            self.radiobutton_chrome = QRadioButton(self.chrome)
+            self.radiobutton_chrome.value = self.chrome
+            if self.chrome == self.chrome_config:
+                self.radiobutton_chrome.setChecked(True)
+            self.chrome_radio_layout.addWidget(self.radiobutton_chrome)
+            self.radiobutton_chrome.toggled.connect(self.on_radiobutton_chrome_clicked)
+        
+
+        #self.login_layout.addWidget(self.button_sync_test_file)
         self.login_layout.addLayout(self.login_layout_id_pw)
         self.login_layout.addWidget(self.button_login_import)
-        self.login_layout.addWidget(self.button_sync_test_file)
-        self.layout_main.addLayout(self.login_layout)
+        self.login_layout.addLayout(self.chrome_radio_layout)
+        
 
         # add log layout
         self.qtext_log_browser = QTextBrowser()
         self.qtext_log_browser.setReadOnly(1)
+        
+        
+
+        #set main layout
+        self.layout_main.addLayout(self.login_layout)
+        
         self.layout_main.addWidget(self.qtext_log_browser)
         self.setLayout(self.layout_main)
 
         #login / import event
         self.button_login_import.clicked.connect(self.on_start)
         self.line_password.returnPressed.connect(self.on_start)
+        
 
 
     # add event list
     def open_fileName_dialog(self):
+        config_data =config.load_config(config_path)
         set_dir = config_data['last_file_path']
         logging.info(set_dir)
         if set_dir == '':
@@ -115,7 +138,7 @@ class FormWidget(QWidget):
         logging.debug('folder path is %s' %folder_path)
         config_data['last_file_path']=folder_path
         logging.debug(config_data)
-        config.save_config(config_data,config_path)
+        config_data = config.save_config(config_data,config_path)
         return file_name
 
     #set tread to change status bar and log browser
@@ -137,10 +160,21 @@ class FormWidget(QWidget):
         show_time_statusbar()
         show_logging()
         return 0
-      
+
+    @pyqtSlot()
+    def on_radiobutton_chrome_clicked(self):
+        config_data =config.load_config(config_path)
+        radioButton = self.sender()
+        if radioButton.isChecked():
+            logging.info(f'{radioButton.value} clicked')
+            config_data['headless'] = radioButton.value
+            config_data = config.save_config(config_data,config_path)
+        return 0
+
 
     @pyqtSlot()
     def on_start(self):
+        config_data =config.load_config(config_path)
         if self.statusbar_status == 'not logged in':
             logging_message.input_message(path = message_path,message = 'current not login, start login')
             self.user = self.line_id.text()
@@ -156,14 +190,12 @@ class FormWidget(QWidget):
                 logging_message.input_message(path = message_path,message = 'user (%s) is logged in' %self.user)
                 config_data['id'] = self.user
                 config_data['password'] = self.password
-                config.save_config(config_data,config_path)
+                config_data = config.save_config(config_data,config_path)
                 self.line_id.setReadOnly(1)
                 self.line_password.setReadOnly(1)
         else:
             logging_message.input_message(path = message_path, message = 'already logged in, start Test Cycle import~!')
-            self.statusbar_status = 'Test Cycle importing~'
-            self.file_name = self.open_fileName_dialog()
-            logging.info(self.file_name)
+            
             def import_test_cycle():
                 self.button_login_import.setEnabled(False)
                 #make session
@@ -182,8 +214,17 @@ class FormWidget(QWidget):
                     self.button_login_import.setEnabled(True)
                     self.statusbar_status = 'Test Cycle importing done.'
                 return 0
-            thread_import = threading.Thread(target=import_test_cycle)
-            thread_import.start()
+            
+            self.file_name = self.open_fileName_dialog()
+            logging.info(self.file_name)
+            flie_ext = os.path.splitext(self.file_name)[1]
+            if flie_ext in ['.xlsx','.xlsm','.xltx','.xltm']:
+                self.statusbar_status = 'Test Cycle importing~'
+                thread_import = threading.Thread(target=import_test_cycle)
+                thread_import.start()
+            else:
+                logging_message.input_message(path = message_path, message = f'please check file name - {self.file_name}')
+        return 0
 
 
 
