@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
-import os
-import datetime
 
 #add internal libary
 from _src._api import logger, excel, playload, config, logging_message
