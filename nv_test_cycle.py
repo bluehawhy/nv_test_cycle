@@ -8,7 +8,7 @@ logging= logger.logger
 
 logging_file_name = logger.log_full_name
 
-version = 'Test Cycle v0.3'
+version = 'Test Cycle v0.51'
 revision_list=[
     'Revision list',
     'v0.1 (2022-12-24) : proto type release (beta ver.)',
@@ -17,7 +17,8 @@ revision_list=[
     'v0.3 (2023-03-20) : exception if loading fail.',
     'v0.4 (2023-03-28) : modify data file.',
     'v0.5 (2023-04-19) : add update result value ',
-    'v0.5 (2023-04-19) : pass update if element not found'
+    'v0.5 (2023-04-19) : pass update if element not found',
+    'v0.51 (2023-04-21) : bugfix during step comment update'
     ]
 
 config_path ='static\config\config.json'
