@@ -1,7 +1,5 @@
 #!/usr/bin/python
-import os
-import sys
-import time
+import os, sys
 import threading
 import traceback
 from PyQt5.QtWidgets import *
@@ -11,15 +9,20 @@ from PyQt5.QtGui import QTextCursor
 from datetime import date
 
 
-from _src._api import logger, rest, config, logging_message
-from _src import test_cycle, test_cycle_selenium
+#add internal libary
+from _src import test_cycle
 
-logging = logger.logger
-logging_file_name = logger.log_full_name
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
+from _api import loggas, zyra, configus
+#from _src._api import logger, jira_rest, config, logging_message
+
+
+logging = loggas.logger
+logging_file_name = loggas.log_full_name
 
 config_path ='static\config\config.json'
-message_path = config.load_config(config_path)['message_path']
-qss_path  = config.load_config(config_path)['qss_path']
+message_path = configus.load_config(config_path)['message_path']
+qss_path  = configus.load_config(config_path)['qss_path']
 
 logging.debug('qss_path is %s' %qss_path)
 logging.debug('config_path is %s' %config_path)
@@ -65,7 +68,7 @@ class FormWidget(QWidget):
 
 
         #set user data
-        config_data =config.load_config(config_path)
+        config_data =configus.load_config(config_path)
         self.user = config_data['id']
         self.password = config_data['password']
         self.line_id = QLineEdit(self.user)       
@@ -91,7 +94,6 @@ class FormWidget(QWidget):
                 self.radiobutton_chrome.setChecked(True)
             self.chrome_radio_layout.addWidget(self.radiobutton_chrome)
             self.radiobutton_chrome.toggled.connect(self.on_radiobutton_chrome_clicked)
-        
 
         #self.login_layout.addWidget(self.button_sync_test_file)
         self.login_layout.addLayout(self.login_layout_id_pw)
@@ -102,8 +104,6 @@ class FormWidget(QWidget):
         # add log layout
         self.qtext_log_browser = QTextBrowser()
         self.qtext_log_browser.setReadOnly(1)
-        
-        
 
         #set main layout
         self.layout_main.addLayout(self.login_layout)
@@ -115,11 +115,9 @@ class FormWidget(QWidget):
         self.button_login_import.clicked.connect(self.on_start)
         self.line_password.returnPressed.connect(self.on_start)
         
-
-
     # add event list
     def open_fileName_dialog(self):
-        config_data =config.load_config(config_path)
+        config_data =configus.load_config(config_path)
         set_dir = config_data['last_file_path']
         logging.info(set_dir)
         if set_dir == '':
@@ -138,7 +136,7 @@ class FormWidget(QWidget):
         logging.debug('folder path is %s' %folder_path)
         config_data['last_file_path']=folder_path
         logging.debug(config_data)
-        config_data = config.save_config(config_data,config_path)
+        config_data = configus.save_config(config_data,config_path)
         return file_name
 
     #set tread to change status bar and log browser
@@ -163,53 +161,49 @@ class FormWidget(QWidget):
 
     @pyqtSlot()
     def on_radiobutton_chrome_clicked(self):
-        config_data =config.load_config(config_path)
+        config_data =configus.load_config(config_path)
         radioButton = self.sender()
         if radioButton.isChecked():
             logging.info(f'{radioButton.value} clicked')
             config_data['headless'] = radioButton.value
-            config_data = config.save_config(config_data,config_path)
+            config_data = configus.save_config(config_data,config_path)
         return 0
 
 
     @pyqtSlot()
     def on_start(self):
-        config_data =config.load_config(config_path)
+        config_data =configus.load_config(config_path)
         if self.statusbar_status == 'not logged in':
-            logging_message.input_message(path = message_path,message = 'current not login, start login')
+            loggas.input_message(path = message_path,message = 'current not login, start login')
             self.user = self.line_id.text()
             self.password = self.line_password.text()
-            self.session, self.session_info = rest.initsession(self.user, self.password)
+            self.session, self.session_info, self.status_login = zyra.initsession(username= self.user, password= self.password, jira_url= config_data['jira_url'])
             #fail to login
-            if self.session_info == None:
+            if self.status_login is False:
                 QMessageBox.about(self, "Login Fail", "please check your password or internet connection")
             #if loggin success
             else:
                 self.button_login_import.setText('Import\nTest Cycle')
                 self.statusbar_status = 'logged in'
-                logging_message.input_message(path = message_path,message = 'user (%s) is logged in' %self.user)
+                loggas.input_message(path = message_path,message = 'user (%s) is logged in' %self.user)
                 config_data['id'] = self.user
                 config_data['password'] = self.password
-                config_data = config.save_config(config_data,config_path)
+                config_data = configus.save_config(config_data,config_path)
                 self.line_id.setReadOnly(1)
                 self.line_password.setReadOnly(1)
         else:
-            logging_message.input_message(path = message_path, message = 'already logged in, start Test Cycle import~!')
+            loggas.input_message(path = message_path, message = 'already logged in, start Test Cycle import~!')
             
             def import_test_cycle():
                 self.button_login_import.setEnabled(False)
                 #make session
-                self.rh = rest.Handler_TestCycle(self.session)
                 try:
-                    if config_data['import_type'] == 'selenium':
-                        test_cycle_selenium.update_test_cycle(self.file_name)
-                    elif config_data['import_type'] == 'rest':
-                        test_cycle.update_test_cycle(self.rh,self.file_name)
+                    test_cycle.update_test_cycle(self.file_name)
                 except Exception as inst:
                     logging.debug(type(inst))
                     logging.debug(inst)
                     logging.debug(traceback.format_exc())
-                    logging_message.input_message(path = message_path,message = "there is errer at the point - %s" %str(inst))
+                    loggas.input_message(path = message_path,message = "there is errer at the point - %s" %str(inst))
                 finally:
                     self.button_login_import.setEnabled(True)
                     self.statusbar_status = 'Test Cycle importing done.'
@@ -223,7 +217,7 @@ class FormWidget(QWidget):
                 thread_import = threading.Thread(target=import_test_cycle)
                 thread_import.start()
             else:
-                logging_message.input_message(path = message_path, message = f'please check file name - {self.file_name}')
+                loggas.input_message(path = message_path, message = f'please check file name - {self.file_name}')
         return 0
 
 

@@ -1,92 +1,169 @@
-# -*- coding: utf-8 -*-
-#!/usr/bin/python
+#add global libary
+import sys, os
 
 #add internal libary
-from _src._api import logger, excel, playload, config, logging_message
+from _src import test_cycle_rest, test_cycle_selenium
 
-    
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
+from _api import loggas, excelium, configus, zyra, selena
+#from _src._api import loggas, excelium, configus, zyra
+
+
 #make logpath
-logging= logger.logger
+logging= loggas.logger
 
 #loading config data
 config_path = 'static\config\config.json'
-config_data =config.load_config(config_path)
-qss_path = config_data['qss_path']
-message_path = config_data['message_path']
-test_cycle_url = config_data['test_cycle_url']
+message_path = configus.load_config(config_path)['message_path']
 
+
+
+
+
+#========================== function validation ==========================
+# check excel file
+def check_file_vaild(index_config, tc_row_index):
+    logging.info(f'check row index')
+    file_valid = False
+    index_config_key = list(index_config.values())
+    index_diff = [x for x in index_config_key if x in tc_row_index]
+    index_miss = [x for x in index_config_key if x not in tc_row_index]
+    file_valid = (len(index_diff) == len(index_config_key))
+    return file_valid , index_miss
+#======================================================================
+
+#==================== handling test cylce data =======================
 def make_excel_data(data,ws_list):
     tc_data ={}
     for row_index in ws_list:
         tc_data[str(row_index)] = str(data[ws_list.index(row_index)].value)
         tc_data['updateDefectList'] = 'true'
     return tc_data
+#======================================================================
 
-def update_test_execution_by_rest(rh, execution_data):
-    #logging.info('%s' %(str(execution_data)))
-    tc_playload = {}
-    execution_data['ExecutionStatus'] = config_data['test_resut'][execution_data['ExecutionStatus']]
-    #logging.info('%s' %(str(execution_data)))
-
-    input_items_for_test_cycle = config_data['input_items_for_test_cycle']
-    for input_item_for_test_cycle in input_items_for_test_cycle:
-        input_item_for_test_cycle = str(input_items_for_test_cycle[input_item_for_test_cycle]).replace('field_input_value',execution_data[input_item_for_test_cycle]).replace('\n','\\n')
-        input_item_for_test_cycle = eval(input_item_for_test_cycle)
-        tc_playload.update(input_item_for_test_cycle['input_playload'])
-    tc_playload['defectList'] = tc_playload['defectList'].split(',')
-    logging.info('test result infomation - %s' %str(tc_playload))
-    logging_message.input_message(path = message_path,message = 'test result infomation - %s' %str(tc_playload))
-    result = rh.updateExecution(execution_data['ExecutionId'],playload.makeplayload(tc_playload))
-    if result.status_code != '200':
-        logging.info(result.status_code)
-        logging_message.input_message(path = message_path,message = 'test execution updated - %s' %str(execution_data['ExecutionId']))
+def update_step_id(driver,tc_data):
+    #find step_id
+    try:
+        int(tc_data['ExecutionId'])
+    except ValueError:
+        return tc_data
     else:
-        logging.info(result.text)
-        logging.info(result)
-        logging_message.input_message(path = message_path,message = 'test execution updated error - %s - %s' %(str(execution_data['ExecutionId']),result.text))
-    return 0
+        if tc_data['OrderId'] == "None":
+            return tc_data
+        status, first_step_id = test_cycle_selenium.driver_get_step_id(driver,tc_data['ExecutionId'])
+        step_id = int(first_step_id)+int(tc_data['OrderId'])-1
+        tc_data['StepId'] = step_id
+        logging.info(tc_data)
+        return tc_data
 
-def update_test_cycle(rh, file):
-    # init
+#======================= update exection and step ======================
+def update_execution_step(rh, execution_data):
+    #logging.info(execution_data)
+    if execution_data['OrderId'] == "1":
+        update_status_execution = test_cycle_rest.update_test_execution(rh,execution_data)
+        update_status_step = test_cycle_rest.update_test_step(rh = rh, execution_data = execution_data)
+    elif execution_data['OrderId'] == 'None':
+        update_status_execution = test_cycle_rest.update_test_execution(rh,execution_data)
+        update_status_step = True
+    else:
+        update_status_execution = True
+        update_status_step = test_cycle_rest.update_test_step(rh = rh, execution_data = execution_data)
+    return update_status_execution, update_status_step
+
+#========================== start test cycle ==========================
+def update_test_cycle(file):
+    config_data =configus.load_config(config_path)
+    # loading excel data
     logging.info('start importing test cycle - %s' %file)
-    logging_message.input_message(path = message_path,message = 'start importing test cycle - %s' %file)
-    wb = excel.Workbook(file,read_only=True,data_only=True)
-    logging.info(wb.get_sheet_list())
-    worksheet = config_data['worksheet']
-    logging.info('search for %s in %s' %(worksheet,str(wb.get_sheet_list())))
-    logging_message.input_message(path = message_path,message = 'search for %s in %s' %(worksheet,str(wb.get_sheet_list())))
-    if worksheet not in wb.get_sheet_list():
-        logging.info('there is no %s in %s so use first sheet' %(worksheet,str(wb.get_sheet_list())))
-        logging_message.input_message(path = message_path,message = 'there is no %s in %s so use first sheet' %(worksheet,str(wb.get_sheet_list())))
-        worksheet = wb.get_sheet_list()[0]
-        config_data['worksheet'] = worksheet
-        config.save_config(config_data,config_path)
-    else:
-        logging.info('there is %s in %s so use the sheet' %(worksheet,str(wb.get_sheet_list())))
-        logging_message.input_message(path = message_path,message = 'there is %s in %s so use the sheet' %(worksheet,str(wb.get_sheet_list())))
+    loggas.input_message(path = message_path,message = f'start importing test cycle - {file}')
+    wb = excelium.Workbook(file,read_only=False,data_only=True)
+
+    #set worksheet
+    worksheet = wb.get_sheet_list()[0]
+
+    #add update_status
     tc_ws = wb.get_worksheet(worksheet)
     tc_row_index = wb.get_first_row(worksheet)
-    input_items_tc = config_data['input_items_for_test_cycle']
-    logging.info('check row index - %s' %str(tc_row_index))
+    if 'update_status' not in tc_row_index:
+        logging.info('need to add update_status')
+        wb.change_cell_data(tc_ws, len(tc_row_index)+1, 1, 'update_status')
+        wb.save_workbook(file)
+        wb.close_workbook()
+    else:
+        logging.info('already inputted update_status')
+        wb.close_workbook()
+    
+    #check excel file is valid (index data)
+    tc_ws = wb.get_worksheet(worksheet)
+    tc_row_index = wb.get_first_row(worksheet)
+    index_config = config_data['excel_index']
+    file_valid , index_miss = check_file_vaild(index_config, tc_row_index)
+    if file_valid is False:
+        logging.info(f'some indexs are missing - {str(index_miss)}')
+        wb.close_workbook()
+        return 0
+    
+    #check login status
+    session ,session_info, status_login = zyra.initsession(username= config_data['id'], password = config_data['password'] , jira_url = config_data['jira_url'], cert=None)
+    if status_login is False:
+        return 0
+    
+    #make REST handler Test cycle
+    rh_tc = zyra.Handler_TestCycle(session=session,jira_url=config_data['jira_url'])
 
-    logging.info('this is input items for test cycle %s' %input_items_tc.keys())
+    #make selenuim driver
+    driver = selena.call_drivier()
+    selena.login(driver)
 
+
+    #=======================================================================================================
+    cnt = 0
     for data in tc_ws.rows:
+        cnt += 1
         tc_data = {}
         tc_data = make_excel_data(data,tc_row_index)
+        tc_data = update_step_id(driver=driver,tc_data=tc_data)
         #if first cell is None => break
         ExecutionId = tc_data['ExecutionId']
         StepId = tc_data['StepId'] if 'StepId' in tc_data.keys() else None
-        if ExecutionId == 'ExecutionId':
-            continue
+        OrderId = tc_data['OrderId'] if 'OrderId' in tc_data.keys() else None
+        update_status = tc_data['update_status']
+        total_result = False
         if ExecutionId in ('None',None):
             break
+        elif ExecutionId == 'ExecutionId':
+            logging.info(f'this is first low')
+        elif update_status == 'True':
+            
+            loggas.input_message(path = message_path,message = f'============ start ExecutionId {ExecutionId} - StepId {StepId} - OrderId {OrderId} ============')
+            logging.info(f'============ start ExecutionId {ExecutionId} - StepId {StepId} - OrderId {OrderId} ============')
+            loggas.input_message(path = message_path,message = f'update status is True')
+            logging.info(f'update status is True so pass')
         else:
-            logging_message.input_message(path = message_path,message = 'ExecutionId %s - StepId %s' %(ExecutionId,StepId))
-            logging.info('ExecutionId %s - StepId %s' %(ExecutionId,StepId))
-            update_test_execution_by_rest(rh, tc_data)
-    logging_message.input_message(path = message_path,message ='import done and close workbook!')
-    logging.info('import done and close workbook!')
+            loggas.input_message(path = message_path,message = f'============ start ExecutionId {ExecutionId} - StepId {StepId} - OrderId {OrderId} ============')
+            logging.info(f'============ start ExecutionId {ExecutionId} - StepId {StepId} - OrderId {OrderId} ============')
+            logging.info(f'update status is False so start update')
+            update_status_execution, update_status_step = update_execution_step(rh_tc, tc_data)
+            #make update status
+            result_value = f'update_status_execution - {update_status_execution}, update_status_step - {update_status_step}'
+            total_result =  all((update_status_execution, update_status_step))
+            logging.info(f'{result_value} - total_result : {total_result}')
+            loggas.input_message(path = message_path,message = f'{result_value} - total_result : {total_result}')
+            wb.change_cell_data(tc_ws, tc_row_index.index('update_status')+1, cnt, total_result)
+            #temp_file = os.path.splitext(file)[0]+'_temp'+os.path.splitext(file)[1]
+            wb.save_workbook(file)
+    loggas.input_message(path = message_path,message ='import done and close workbook!')
+    logging.info('import done!')
+    wb.save_workbook(file)
+    logging.info('close workbook!')
     wb.close_workbook()
-    return 0
-    
+    logging.info('close driver!')
+    driver.close()
+    return 0    
+
+
+
+
+
+
+
