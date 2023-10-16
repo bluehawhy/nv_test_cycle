@@ -29,10 +29,6 @@ def make_excel_data(data,ws_list):
         tc_data['updateDefectList'] = 'true'
     return tc_data
 
-
-
-
-
 #=================================================================================================
 
 def driver_get_step_id(driver,ExecutionId=None, OrderId=None):
@@ -48,7 +44,6 @@ def driver_get_step_id(driver,ExecutionId=None, OrderId=None):
     first_step_id = re.findall('data-stepid="([0-9]*)"',step_id_all)[0]
     logging.info(first_step_id)
     return status, first_step_id
-
 
 #=================================================================================================
 # this is execution field update 

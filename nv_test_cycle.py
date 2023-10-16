@@ -12,7 +12,7 @@ logging= loggas.logger
 
 logging_file_name = loggas.log_full_name
 
-version = 'Test Cycle v1.0'
+version = 'Test Cycle v1.2'
 revision_list=[
     'Revision list',
     'v0.1 (2022-12-24) : proto type release (beta ver.)',
@@ -24,7 +24,8 @@ revision_list=[
     'v0.5 (2023-04-19) : pass update if element not found',
     'v0.51 (2023-04-21) : bugfix during step comment update',
     'v1.0 (2023-04-21) : use of REST (import) and selenium',
-    'v1.1 (2023-09-21) : use of REST (import) and selenium'
+    'v1.1 (2023-09-21) : use of REST (import) and selenium',
+    'v1.2 (2023-10-16) : bug fix of finding test step id'
     ]
 
 config_path ='static\config\config.json'
