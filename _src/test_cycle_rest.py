@@ -5,10 +5,18 @@
 import json
 import sys, os
 
+
 #add internal libary
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
-from _api import loggas, jason, configus
-#from _src._api import loggas, jason, configus
+from _src import test_cycle
+
+refer_api = "local"
+#refer_api = "global"
+
+if refer_api == "global":
+    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
+    from _api import loggas, jason, configus
+if refer_api == "local":
+    from _src._api import loggas, jason, configus
 
 #make logpath
 logging= loggas.logger

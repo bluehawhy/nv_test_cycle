@@ -12,10 +12,14 @@ from datetime import date
 #add internal libary
 from _src import test_cycle
 
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
-from _api import loggas, zyra, configus
-#from _src._api import logger, jira_rest, config, logging_message
+refer_api = "local"
+#refer_api = "global"
 
+if refer_api == "global":
+    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
+    from _api import loggas, zyra, configus
+if refer_api == "local":
+    from _src._api import loggas, zyra, configus
 
 logging = loggas.logger
 logging_file_name = loggas.log_full_name

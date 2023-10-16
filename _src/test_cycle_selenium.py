@@ -10,9 +10,17 @@ import chromedriver_autoinstaller
 
 
 #add internal libary
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
-from _api import loggas, configus, selena
-#from _src._api import loggas, configus, selena
+from _src import test_cycle
+
+refer_api = "local"
+#refer_api = "global"
+
+if refer_api == "global":
+    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
+    from _api import loggas, configus, selena
+if refer_api == "local":
+    from _src._api import loggas, configus, selena
+
 
 #make logpath
 logging= loggas.logger

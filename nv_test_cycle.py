@@ -3,11 +3,18 @@ from PyQt5.QtWidgets import QApplication
 
 
 #add internal libary
-sys.path.append((os.path.dirname(os.path.abspath(os.path.dirname(__file__)))))
-from _api import loggas, configus
-#from _src._api import loggas, configus
-
 from _src import test_cycle_ui, test_cycle
+
+refer_api = "local"
+#refer_api = "global"
+
+if refer_api == "global":
+    sys.path.append((os.path.dirname(os.path.abspath(os.path.dirname(__file__)))))
+    from _api import loggas, configus
+if refer_api == "local":
+    from _src._api import loggas, configus
+
+
 logging= loggas.logger
 
 logging_file_name = loggas.log_full_name

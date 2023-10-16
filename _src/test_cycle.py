@@ -1,13 +1,18 @@
 #add global libary
 import sys, os
 
+
 #add internal libary
 from _src import test_cycle_rest, test_cycle_selenium
 
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
-from _api import loggas, excelium, configus, zyra, selena
-#from _src._api import loggas, excelium, configus, zyra
+refer_api = "local"
+#refer_api = "global"
 
+if refer_api == "global":
+    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
+    from _api import loggas, excelium, configus, zyra, selena
+if refer_api == "local":
+    from _src._api import loggas, excelium, configus, zyra
 
 #make logpath
 logging= loggas.logger
