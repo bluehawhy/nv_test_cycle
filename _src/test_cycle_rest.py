@@ -7,8 +7,6 @@ import sys, os
 
 
 #add internal libary
-from _src import test_cycle
-
 refer_api = "local"
 #refer_api = "global"
 
@@ -51,7 +49,7 @@ def update_test_execution(rh = None, execution_data = None):
 
     logging.info('execution id  - %s' %str(execution_data['ExecutionId']))
     logging.info('test execution infomation - %s' %str(te_playload))
-    result = rh.updateExecution(execution_data['ExecutionId'],jason.makeplayload(te_playload))
+    result = rh.update_test_execution(execution_data['ExecutionId'],jason.makeplayload(te_playload))
     if result.status_code == 200:
         #logging.info(result.text)
         loggas.input_message(path = message_path,message = 'test execution updated - %s' %str(execution_data['ExecutionId']))
@@ -83,7 +81,7 @@ def update_test_step(rh = None, execution_data = None):
             ts_playload.update(input_item_ts['input_playload'])
     logging.info('step id  - %s' %str(execution_data['StepId']))
     logging.info('test step infomation - %s' %str(ts_playload))
-    result = rh.updateStep(stepid= execution_data['StepId'], playloads=json.dumps(ts_playload))
+    result = rh.update_test_step(stepid= execution_data['StepId'], playloads=json.dumps(ts_playload))
     if result.status_code == 200:
         #logging.info(result.text)
         loggas.input_message(path = message_path,message = 'test step updated - %s' %str(execution_data['StepId']))

@@ -12,7 +12,7 @@ if refer_api == "global":
     sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
     from _api import loggas, excelium, configus, zyra, selena
 if refer_api == "local":
-    from _src._api import loggas, excelium, configus, zyra
+    from _src._api import loggas, excelium, configus, zyra, selena
 
 #make logpath
 logging= loggas.logger
@@ -20,12 +20,10 @@ logging= loggas.logger
 #loading config data
 config_path = 'static\config\config.json'
 message_path = configus.load_config(config_path)['message_path']
-
-
-
-
-
-#========================== function validation ==========================
+#======================================================================
+#======================================================================
+#======================================================================
+#========================== function validation =======================
 # check excel file
 def check_file_vaild(index_config, tc_row_index):
     logging.info(f'check row index')
@@ -35,8 +33,6 @@ def check_file_vaild(index_config, tc_row_index):
     index_miss = [x for x in index_config_key if x not in tc_row_index]
     file_valid = (len(index_diff) == len(index_config_key))
     return file_valid , index_miss
-#======================================================================
-
 #==================== handling test cylce data =======================
 def make_excel_data(data,ws_list):
     tc_data ={}
@@ -45,21 +41,29 @@ def make_excel_data(data,ws_list):
         tc_data['updateDefectList'] = 'true'
     return tc_data
 #======================================================================
-
-def update_step_id(driver,tc_data):
+#======================================================================
+#======================================================================
+#======================================================================
+def get_step_id(driver,tc_data, execution_data):
     #find step_id
     try:
         int(tc_data['ExecutionId'])
     except ValueError:
-        return tc_data
+        return tc_data, execution_data
     else:
         if tc_data['OrderId'] == "None":
-            return tc_data
-        status, first_step_id = test_cycle_selenium.driver_get_step_id(driver,tc_data['ExecutionId'])
-        step_id = int(first_step_id)+int(tc_data['OrderId'])-1
-        tc_data['StepId'] = step_id
-        logging.info(tc_data)
-        return tc_data
+            return tc_data, execution_data
+        if tc_data['ExecutionId'] in execution_data.keys():
+            first_step_id = execution_data[tc_data['ExecutionId']]
+            step_id = int(first_step_id)+int(tc_data['OrderId'])-1
+            tc_data['StepId'] = step_id
+            return tc_data, execution_data
+        if tc_data['ExecutionId'] not in execution_data.keys():
+            status, first_step_id = test_cycle_selenium.driver_get_step_id(driver,tc_data['ExecutionId'])
+            step_id = int(first_step_id)+int(tc_data['OrderId'])-1
+            tc_data['StepId'] = step_id
+            execution_data[tc_data['ExecutionId']] = first_step_id
+            return tc_data, execution_data
 
 #======================= update exection and step ======================
 def update_execution_step(rh, execution_data):
@@ -75,6 +79,10 @@ def update_execution_step(rh, execution_data):
         update_status_step = test_cycle_rest.update_test_step(rh = rh, execution_data = execution_data)
     return update_status_execution, update_status_step
 
+#=======================================================================================================
+#=======================================================================================================
+#=======================================================================================================
+#=======================================================================================================
 #========================== start test cycle ==========================
 def update_test_cycle(file):
     config_data =configus.load_config(config_path)
@@ -117,17 +125,18 @@ def update_test_cycle(file):
     rh_tc = zyra.Handler_TestCycle(session=session,jira_url=config_data['jira_url'])
 
     #make selenuim driver
-    driver = selena.call_drivier()
-    selena.login(driver)
+    driver = selena.call_drivier(headless=config_data['headless'])
+    test_cycle_selenium.login(driver)
 
 
     #=======================================================================================================
+    dict_executionid_stepid ={}
     cnt = 0
     for data in tc_ws.rows:
         cnt += 1
         tc_data = {}
         tc_data = make_excel_data(data,tc_row_index)
-        tc_data = update_step_id(driver=driver,tc_data=tc_data)
+        tc_data, dict_executionid_stepid = get_step_id(driver=driver,tc_data=tc_data, execution_data = dict_executionid_stepid)
         #if first cell is None => break
         ExecutionId = tc_data['ExecutionId']
         StepId = tc_data['StepId'] if 'StepId' in tc_data.keys() else None
@@ -139,7 +148,6 @@ def update_test_cycle(file):
         elif ExecutionId == 'ExecutionId':
             logging.info(f'this is first low')
         elif update_status == 'True':
-            
             loggas.input_message(path = message_path,message = f'============ start ExecutionId {ExecutionId} - StepId {StepId} - OrderId {OrderId} ============')
             logging.info(f'============ start ExecutionId {ExecutionId} - StepId {StepId} - OrderId {OrderId} ============')
             loggas.input_message(path = message_path,message = f'update status is True')
@@ -165,10 +173,7 @@ def update_test_cycle(file):
     logging.info('close driver!')
     driver.close()
     return 0    
-
-
-
-
-
-
-
+#=======================================================================================================
+#=======================================================================================================
+#=======================================================================================================
+#=======================================================================================================

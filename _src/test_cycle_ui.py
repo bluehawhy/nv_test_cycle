@@ -28,9 +28,6 @@ config_path ='static\config\config.json'
 message_path = configus.load_config(config_path)['message_path']
 qss_path  = configus.load_config(config_path)['qss_path']
 
-logging.debug('qss_path is %s' %qss_path)
-logging.debug('config_path is %s' %config_path)
-
 class MyMainWindow(QMainWindow):
     def __init__(self,title):
         super().__init__()
@@ -69,8 +66,6 @@ class FormWidget(QWidget):
         self.login_layout = QHBoxLayout(self)
         self.login_layout_id_pw = QGridLayout(self)
         
-
-
         #set user data
         config_data =configus.load_config(config_path)
         self.user = config_data['id']
@@ -172,7 +167,6 @@ class FormWidget(QWidget):
             config_data['headless'] = radioButton.value
             config_data = configus.save_config(config_data,config_path)
         return 0
-
 
     @pyqtSlot()
     def on_start(self):

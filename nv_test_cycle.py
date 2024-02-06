@@ -19,7 +19,7 @@ logging= loggas.logger
 
 logging_file_name = loggas.log_full_name
 
-version = 'Test Cycle v1.2'
+version = 'Test Cycle v1.21'
 revision_list=[
     'Revision list',
     'v0.1 (2022-12-24) : proto type release (beta ver.)',
@@ -32,7 +32,8 @@ revision_list=[
     'v0.51 (2023-04-21) : bugfix during step comment update',
     'v1.0 (2023-04-21) : use of REST (import) and selenium',
     'v1.1 (2023-09-21) : use of REST (import) and selenium',
-    'v1.2 (2023-10-16) : bug fix of finding test step id'
+    'v1.2 (2023-10-16) : bug fix of finding test step id',
+    'v1.21 (2024-02-02) : modify function to reduce selenium search'
     ]
 
 config_path ='static\config\config.json'
@@ -49,8 +50,8 @@ def start_app():
     sys.exit(app.exec_())
 
 def debug_app():
-    path_modi_file = r'C:/Users/Downloads/Smok.xlsx'
-    test_cycle.update_test_cycle(path_modi_file)
+    test_cycle.update_test_cycle('test.xlsx')
+
  
 if __name__ =='__main__':
     start_app()

@@ -60,6 +60,21 @@ def makeLogger(logfile):
     loggerger.info("start dev logging in the path : %s" %logfile)
     return loggerger
 
+# Print header for log in Jenkins
+def print_header(text: str, max_width=80):
+    separator = '=' * max_width
+    logging.info("\n{sep}\n{text}\n{sep}\n".format(
+        sep=separator, text=text.center(max_width)))
+
+# Print header for log in Jenkins
+def print_method(method):
+    def main(*args, **kwargs):
+        logging.debug(f'[START] {method.__name__}')
+        result = method(*args, **kwargs)
+        logging.debug(f'[DONE] {method.__name__}')
+        return result
+    return main
+
 
 log_file_name = '%s_%s.log' % (filas.executed_file_name, filas.now_date_time)
 log_folder_name = os.path.join('_logs')
